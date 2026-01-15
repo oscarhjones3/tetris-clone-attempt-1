@@ -1,32 +1,204 @@
 extends TileMapLayer
-var L0 = [Vector2i(0,0),Vector2i(0,1),Vector2i(1,0),Vector2i(2,0)]
+#piece position coordinates, for all rotations
 
-var J0 = [Vector2i(0,0),Vector2i(2,1),Vector2i(1,0),Vector2i(2,0)]
+var L0: Array = [Vector2i(0,1),Vector2i(0,2),Vector2i(1,1),Vector2i(2,1)]
+var L90: Array = [Vector2i(0,0),Vector2i(1,0),Vector2i(1,1),Vector2i(1,2)]
+var L180: Array = [Vector2i(0,2),Vector2i(1,2),Vector2i(2,1),Vector2i(2,2)]
+var L270: Array = [Vector2i(1,0),Vector2i(1,1),Vector2i(1,2),Vector2i(2,2)]
 
-var S0 = [Vector2i(0,1),Vector2i(1,0),Vector2i(1,1),Vector2i(2,0)]
+var J0: Array = [Vector2i(0,1),Vector2i(1,1),Vector2i(2,1),Vector2i(2,2)]
+var J90: Array = [Vector2i(0,2),Vector2i(1,0),Vector2i(1,1),Vector2i(1,2)]
+var J180: Array = [Vector2i(0,0),Vector2i(0,1),Vector2i(1,1),Vector2i(2,1)]
+var J270: Array = [Vector2i(1,0),Vector2i(1,1),Vector2i(1,2),Vector2i(2,0)]
 
-var Z0 = [Vector2i(0,0),Vector2i(1,0),Vector2i(1,1),Vector2i(2,1)]
+var S0: Array = [Vector2i(0,1),Vector2i(1,0),Vector2i(1,1),Vector2i(2,0)]
+var S90: Array = [Vector2i(1,0),Vector2i(1,1),Vector2i(2,1),Vector2i(2,2)]
+var S180: Array = [Vector2i(0,2),Vector2i(1,1),Vector2i(1,2),Vector2i(2,1)]
+var S270: Array = [Vector2i(0,0),Vector2i(0,1),Vector2i(1,1),Vector2i(1,2)]
 
-var O0 = [Vector2i(0,0),Vector2i(1,0),Vector2i(0,1),Vector2i(1,1)]
+var Z0: Array = [Vector2i(0,0),Vector2i(1,0),Vector2i(1,1),Vector2i(2,1)]
+var Z90: Array = [Vector2i(1,1),Vector2i(1,2),Vector2i(2,0),Vector2i(2,1)]
+var Z180: Array = [Vector2i(0,1),Vector2i(1,1),Vector2i(1,2),Vector2i(2,2)]
+var Z270: Array = [Vector2i(0,1),Vector2i(0,2),Vector2i(1,0),Vector2i(1,1)]
 
+var O0: Array = [Vector2i(1,0),Vector2i(2,0),Vector2i(1,1),Vector2i(2,1)]
+var O90: Array = [Vector2i(1,0),Vector2i(2,0),Vector2i(1,1),Vector2i(2,1)]
+var O180: Array = [Vector2i(1,0),Vector2i(2,0),Vector2i(1,1),Vector2i(2,1)]
+var O270: Array = [Vector2i(1,0),Vector2i(2,0),Vector2i(1,1),Vector2i(2,1)]
+
+var T0: Array = [Vector2i(0,1),Vector2i(1,1),Vector2i(1,2),Vector2i(2,1)]
+var T90: Array = [Vector2i(0,1),Vector2i(1,0),Vector2i(1,1),Vector2i(1,2)]
+var T180: Array = [Vector2i(0,1),Vector2i(1,0),Vector2i(1,1),Vector2i(2,1)]
+var T270: Array = [Vector2i(1,0),Vector2i(1,1),Vector2i(1,2),Vector2i(2,1)]
+
+var I0: Array = [Vector2i(0,2),Vector2i(1,2),Vector2i(2,2),Vector2i(3,2)]
+var I90: Array = [Vector2i(1,0),Vector2i(1,1),Vector2i(1,2),Vector2i(1,3)]
+var I180: Array = [Vector2i(0,1),Vector2i(1,1),Vector2i(2,1),Vector2i(3,1)]
+var I270: Array = [Vector2i(1,0),Vector2i(1,1),Vector2i(1,2),Vector2i(1,3)]
+
+var L: Array = [L0,L90,L180,L270]
+var J: Array = [J0, J90, J180, J270]
+var S: Array = [S0, S90, S180, S270]
+var Z: Array = [Z0, Z90, Z180, Z270]
+var O: Array = [O0,O90,O180,O270]
+var T: Array = [T0, T90, T180, T270]
+var I: Array = [I0, I90, I180, I270]
+#board variables
+const COLS : int = 10
+const ROWS : int = 20
+
+#pieces
+var piece
+var next_piece
+var rot : int = 0
+var active_piece : Array
+var pieces = [L,J,S,Z,O,T,I]
 var falls = 0
+
+const startPos = Vector2i(4,1)
+var cur : Vector2i
+var dropSpeed : float = 0.5
+var moveTime = [20,20,50]
+var moveTicks = [0,0,0]
+var ARR : float = 1
+var Directions = [Vector2i(-1,0), Vector2i(1,0), Vector2i(0,1)]
+
+#tilevars
+var tile_id = 1
+var pieceAtlas : Vector2i
+var nextAtlas : Vector2i
+var pieceAtlases = [Vector2i(1,1),Vector2i(0,1),Vector2i(0,1),Vector2i(1,1),Vector2i(1,0),Vector2i(1,0),Vector2i(1,0)]
+
+var rng = RandomNumberGenerator.new()
+#gamevars
+signal scoreUpdate(p : int)
+var lines:int = 0
+var points : int = 0
+var level = 0
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-	for i in range(0,4):
-		set_cell(Vector2i(O0[i].x + 5,O0[i].y), 1, Vector2i(1,0))
+	newGame()
 	
 	pass # Replace with function body.
 # Called every frame. 'delta' is the elapsed time since the previous frame.
+func _input(event: InputEvent) -> void:
+		if Input.is_action_just_pressed("ui_left"):
+			move(Vector2i(-1,0))
+			moveTicks[0] -= 30
+		if Input.is_action_just_pressed("ui_right"):
+			move(Vector2i(1,0))
+			moveTicks[1] -= 30
+		if Input.is_action_just_pressed("x"):
+			rotator(1)
+		if Input.is_action_just_pressed("z"):
+			rotator(3)
 func _process(delta: float) -> void:
+	if Input.is_action_pressed("ui_left"):
+		moveTicks[0] += ARR
+	elif Input.is_action_pressed("ui_right"):
+		moveTicks[1] += ARR
+	elif Input.is_action_pressed("ui_down"):
+		moveTicks[2] += 10
+	emit_signal("scoreUpdate", points)
+	moveTicks[2] += dropSpeed
+	for i in range (0,3):
+		if(moveTicks[i] > moveTime[i]):
+			move(Directions[i])
+			moveTicks[i] = 0
+			if(Input.is_action_pressed("ui_down")):
+				points += 1
+func scoreChecker():
+	var isClear = true
+	var clearSize :int = 0
+	var clearedLines : Array = []
+	for y in range(20,1,-1):
+		isClear = true
+		for x in range(1,11):
+			if(get_parent().get_node("Board").get_cell_atlas_coords(Vector2i(x,y)) == Vector2i(2,0)):
+				isClear = false
+		if(isClear):
+			clearedLines.append(y)
+	score(clearedLines)
+func score(clears: Array):
+	var amount = clears.size()
+	var bases = [40,100,300,1200]
+	if(amount > 0):
+		lines += amount
+		points += bases[amount-1] * (level +1)
+	for i in clears:
+		for x in range(1,11):
+			get_parent().get_node("Board").set_cell(Vector2i(x,i), 1, Vector2i(2,0))
+	for i in range (0,amount):
+		for y in range(clears.max(),1,-1):
+			for x in range(1,11):
+				if(not empty(Vector2i(x,y-1))):
+					get_parent().get_node("Board").set_cell(Vector2i(x,y),1,get_parent().get_node("Board").get_cell_atlas_coords(Vector2i(x,y-1)))
+					get_parent().get_node("Board").set_cell(Vector2i(x,y-1),1,Vector2i(2,0))
+		
+func newGame():
+	lines = 0
+	piece = pick_piece()
+	createPiece(piece)
+	next_piece = pick_piece()
+	nextAtlas = pieceAtlases[pieces.find(next_piece)]
+
+func pick_piece():
+	var p = randi() % 7
+	return pieces.get(p)
+	
+func createPiece(p):
+	rot = 0
+	cur = startPos
+	moveTicks = [0,0,0]
+	draw(p[rot],startPos,pieceAtlases[pieces.find(piece)])
+
+func move(dir:Vector2i):
+	if(canMove(dir)):
+		draw(piece[rot],cur,Vector2i(-1,-1))
+		cur.x += dir.x
+		cur.y += dir.y
+		draw(piece[rot],cur,pieceAtlases[pieces.find(piece)])
+	elif(dir == Directions[2]):
+		lock()
+		piece = next_piece
+		pieceAtlas = nextAtlas
+		next_piece = pick_piece()
+		nextAtlas = pieceAtlases[pieces.find(next_piece)]
+		createPiece(piece)
+
+func draw(p, coord, atlas):
+	for i in p:
+		set_cell(coord + i,1,atlas)
 	pass
 
+func rotator(clock):
+	if (canRotate(clock)):
+		draw(piece[rot],cur,Vector2i(-1,-1))
+		rot = (rot + clock) % 4
+		draw(piece[rot],cur,pieceAtlases[pieces.find(piece)])
 
-func _on_timer_timeout() -> void:
-	var prev = []
-	for i in range(0,4):
-		prev.append(Vector2i(O0[i].x+5,O0[i].y+falls))
-	falls += 1
-	for i in range(0,4):
-		set_cell(prev[i],-1)
-	for i in range (0,4):
-		set_cell(Vector2i(O0[i].x+5,O0[i].y+falls),1, Vector2i(1,0))
+func lock():
+		draw(piece[rot],cur,Vector2i(-1,-1))
+		for i in piece[rot]:
+			get_parent().get_node("Board").set_cell(i+cur,1,pieceAtlases[pieces.find(piece)])
+		scoreChecker()
+
+func canMove(dir:Vector2i):
+	var cm = true
+	for i in piece.get(rot):
+		if(not empty(i + cur + dir)):
+			cm = false
+	return cm
+
+func canRotate(d):
+	var cr = true
+	for i in piece.get((rot+d)%4):
+		if(not empty(i+cur)):
+			cr = false
+	return cr
+
+func empty(pos):
+	if(get_parent().get_node("Board").get_cell_atlas_coords(pos) != Vector2i(2,0)):
+		return false
+	elif(get_parent().get_node("Board").get_cell_atlas_coords(pos) == Vector2i(2,0)):
+		return true

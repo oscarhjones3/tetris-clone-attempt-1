@@ -1,11 +1,15 @@
 extends Label
 
+
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-	text = (str("Cheeeeeeeese"))
+	pass # Replace with function body.
 
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
-	#$Label.set_text(str($dropTime.get_time_left()))
 	pass
+
+
+func _on_active_score_update(p: int) -> void:
+	text = str(p) # Replace with function body.
