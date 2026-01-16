@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dk5yjpm05m87a"
-path="res://.godot/imported/TetrisTileMap.png-9ee1282f5c6dcdd1b3edac2a67d5f57b.ctex"
+uid="uid://b2ie8o6842v4j"
+path="res://.godot/imported/bgTiles4.png-063308aad7d76f34155b09dce0471a18.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://TetrisTileMap.png"
-dest_files=["res://.godot/imported/TetrisTileMap.png-9ee1282f5c6dcdd1b3edac2a67d5f57b.ctex"]
+source_file="res://tileMaps/bgTiles4.png"
+dest_files=["res://.godot/imported/bgTiles4.png-063308aad7d76f34155b09dce0471a18.ctex"]
 
 [params]
 
