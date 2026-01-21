@@ -32,8 +32,8 @@ var T180: Array = [Vector2i(0,1),Vector2i(1,0),Vector2i(1,1),Vector2i(2,1)]
 var T270: Array = [Vector2i(1,0),Vector2i(1,1),Vector2i(1,2),Vector2i(2,1)]
 
 var I0: Array = [Vector2i(0,2),Vector2i(1,2),Vector2i(2,2),Vector2i(3,2)]
-var I90: Array = [Vector2i(1,0),Vector2i(1,1),Vector2i(1,2),Vector2i(1,3)]
-var I180: Array = [Vector2i(0,1),Vector2i(1,1),Vector2i(2,1),Vector2i(3,1)]
+var I90: Array = [Vector2i(2,0),Vector2i(2,1),Vector2i(2,2),Vector2i(2,3)]
+var I180: Array = [Vector2i(0,2),Vector2i(1,2),Vector2i(2,2),Vector2i(3,2)]
 var I270: Array = [Vector2i(2,0),Vector2i(2,1),Vector2i(2,2),Vector2i(2,3)]
 
 var L: Array = [L0,L90,L180,L270]
@@ -53,8 +53,8 @@ var active_piece : Array
 var pieces = [L,J,S,Z,O,T,I]
 var falls = 0
 
-const startPos = Vector2i(4,1)
-const nextPos = Vector2i(13,5)
+const startPos = [Vector2i(4,0),Vector2i(4,0),Vector2i(4,1),Vector2i(4,1),Vector2i(4,1),Vector2i(4,0),Vector2i(4,-1)]
+const nextPos = Vector2i(13,4)
 var cur : Vector2i
 var dropSpeed : float = 1
 var dropTable : Array = [48,43,38,33,28,23,18,13,8,6,5,5,5,4,4,4,3,3,3,2,2,2,2,2,2,2,2,2,2,1]
@@ -74,18 +74,25 @@ var pieceAtlases = [Vector2i(1,1),Vector2i(0,1),Vector2i(0,1),Vector2i(1,1),Vect
 
 var rng = RandomNumberGenerator.new()
 #gamevars
-signal scoreUpdate(p : int,l:int)
+signal scoreUpdate(p : int,l:int, li:int)
 signal gameOver
+
+var stopGame :bool = false
+var paused : bool = false
+
 var lines:int = 0
 var points : int = 0
-var highScore : Array = []
-var highScoreNames : Array = []
-var level = 0
-var paused : bool = false
+var pName : String
+
+var records = GameStart.records
+var highScoreNames = GameStart.recordNames 
+
+var level = GameStart.level
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	newGame()
-	
+	#records = []
+	#highScoreNames = []
 	pass # Replace with function body.
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _input(event: InputEvent) -> void:
@@ -99,6 +106,15 @@ func _input(event: InputEvent) -> void:
 	if Input.is_action_just_released("ui_down"):
 		sd = true
 func _process(delta: float) -> void:
+	if Input.is_action_just_pressed("ui_accept"):
+			if(stopGame):
+				get_tree().change_scene_to_file("res://menu_screen.tscn")
+			elif(paused):
+				paused = false
+				get_parent().get_node("PauseScreen").visible = false
+			else:
+				paused = true
+				get_parent().get_node("PauseScreen").visible = true
 	if(not paused):
 		if Input.is_action_just_pressed("x"):
 			rotator(1)
@@ -111,7 +127,7 @@ func _process(delta: float) -> void:
 		elif Input.is_action_pressed("ui_down"):
 			if sd == true: 
 				moveTicks[2] += dropTable[level]/2
-		emit_signal("scoreUpdate", points, level)
+		emit_signal("scoreUpdate", points, level, lines)
 		moveTicks[2] += dropSpeed
 		for i in range (0,3):
 			if(moveTicks[i] > moveTime[i]):
@@ -145,17 +161,17 @@ func score(c: Array):
 		
 		for x in range(1,6):
 			if amount > 3: 
-				get_parent().get_node("Board").set_cell(Vector2i(6-x,clears[3]), level, Vector2i(2,0))
-				get_parent().get_node("Board").set_cell(Vector2i(5+x,clears[3]), level, Vector2i(2,0))
+				get_parent().get_node("Board").set_cell(Vector2i(6-x,clears[3]), level % 10, Vector2i(2,0))
+				get_parent().get_node("Board").set_cell(Vector2i(5+x,clears[3]), level % 10, Vector2i(2,0))
 			if amount > 2: 
-				get_parent().get_node("Board").set_cell(Vector2i(6-x,clears[2]), level, Vector2i(2,0))
-				get_parent().get_node("Board").set_cell(Vector2i(5+x,clears[2]), level, Vector2i(2,0))
+				get_parent().get_node("Board").set_cell(Vector2i(6-x,clears[2]), level% 10, Vector2i(2,0))
+				get_parent().get_node("Board").set_cell(Vector2i(5+x,clears[2]), level% 10, Vector2i(2,0))
 			if amount > 1: 
 				get_parent().get_node("Board").set_cell(Vector2i(6-x,clears[1]), level, Vector2i(2,0))
-				get_parent().get_node("Board").set_cell(Vector2i(5+x,clears[1]), level, Vector2i(2,0))
+				get_parent().get_node("Board").set_cell(Vector2i(5+x,clears[1]), level% 10, Vector2i(2,0))
 			if amount > 0: 
-				get_parent().get_node("Board").set_cell(Vector2i(6-x,clears[0]), level, Vector2i(2,0))
-				get_parent().get_node("Board").set_cell(Vector2i(5+x,clears[0]), level, Vector2i(2,0))
+				get_parent().get_node("Board").set_cell(Vector2i(6-x,clears[0]), level% 10, Vector2i(2,0))
+				get_parent().get_node("Board").set_cell(Vector2i(5+x,clears[0]), level% 10, Vector2i(2,0))
 			await get_tree().create_timer(0.1).timeout
 	
 		for i in range (0,amount):
@@ -165,21 +181,41 @@ func score(c: Array):
 				if (y != clears.max()):
 					for x in range(1,11):
 						if(not empty(Vector2i(x,y-1))):
-							get_parent().get_node("Board").set_cell(Vector2i(x,y),level,get_parent().get_node("Board").get_cell_atlas_coords(Vector2i(x,y-1)))
-							get_parent().get_node("Board").set_cell(Vector2i(x,y-1),level,Vector2i(2,0))
+							get_parent().get_node("Board").set_cell(Vector2i(x,y),level% 10,get_parent().get_node("Board").get_cell_atlas_coords(Vector2i(x,y-1)))
+							get_parent().get_node("Board").set_cell(Vector2i(x,y-1),level% 10,Vector2i(2,0))
 				if (y == clears.max() && blankRow(clears.max())):
 					for x in range(1,11):
 						if(not empty(Vector2i(x,y-1))):
-							get_parent().get_node("Board").set_cell(Vector2i(x,y),level,get_parent().get_node("Board").get_cell_atlas_coords(Vector2i(x,y-1)))
-							get_parent().get_node("Board").set_cell(Vector2i(x,y-1),level,Vector2i(2,0))
-		createPiece(piece)
+							get_parent().get_node("Board").set_cell(Vector2i(x,y),level% 10,get_parent().get_node("Board").get_cell_atlas_coords(Vector2i(x,y-1)))
+							get_parent().get_node("Board").set_cell(Vector2i(x,y-1),level% 10,Vector2i(2,0))
 		if(lines >= (10 + (level * 10))):
 			levelUp()
 		paused = false
+		createPiece(piece)
+		
+		
+func saveRecords():
+	var saved = false
+	
+	for i in range(0,records.size()):
+		if(points > records[i]):
+			if(not saved):
+				records.insert(i,points)
+				highScoreNames.insert(i,pName)
+				saved = true
+	if(not saved && records.size() <= 10):
+		records.append(points)
+		highScoreNames.append(pName)
+	GameStart.records = records
+	GameStart.recordNames = highScoreNames
+	GameStart.writeSave()
+	
 func newGame():
+	get_parent().get_node("HUD/gameOver").text = ""
+	get_parent().get_node("HUD/nameEnter").hide()
 	lines = 0
 	points = 0
-	level = 0
+	level = GameStart.level
 	moveTime[2]=dropTable[level]
 	piece = pick_piece()
 	next_piece = pick_piece()
@@ -192,29 +228,45 @@ func endGame():
 	var alt = 0
 	for y in range(20,0,-1):
 		for x in range(1,11):
-			get_parent().get_node("Board").set_cell(Vector2i(x,y),level,colors[alt])
+			get_parent().get_node("Board").set_cell(Vector2i(x,y),level% 10,colors[alt])
 			await get_tree().create_timer(0.005).timeout
 		alt = (alt + 1) % 3
 	for y in range(20,0,-1):
 		for x in range(1,11):
-			get_parent().get_node("Board").set_cell(Vector2i(x,y),level,Vector2i(2,0))
+			get_parent().get_node("Board").set_cell(Vector2i(x,y),level% 10,Vector2i(2,0))
 		await get_tree().create_timer(0.02).timeout
+	
+	get_parent().get_node("HUD/gameOver").text = "Game Over"
+	get_parent().get_node("HUD/nameEnter").show()
+	get_parent().get_node("HUD/nameEnter").edit()
+	await get_parent().get_node("HUD/nameEnter").text_submitted
+	pName = get_parent().get_node("HUD/nameEnter").text
+	stopGame = true
 	emit_signal("gameOver")
+	saveRecords()
 	
 func levelUp():
 	level += 1
 	moveTime[2] = dropTable[level]
+	for y in range(20,0,-1):
+		for x in range (1,11):
+			var co = get_parent().get_node("Board").get_cell_atlas_coords(Vector2i(x,y))
+			get_parent().get_node("Board").set_cell(Vector2i(x,y),level % 10,co)
 func pick_piece():
 	var p = randi() % 7
 	return pieces.get(p)
 	
 func createPiece(p):
+	paused = true
+	await get_tree().create_timer(0.25).timeout
+	paused = false
 	rot = 0
-	cur = startPos
+	cur = startPos[pieces.find(p)]
 	moveTicks = [0,0,0]
-	draw(p[rot],startPos,pieceAtlases[pieces.find(piece)])
+	draw(p[rot],startPos[pieces.find(p)],pieceAtlases[pieces.find(piece)])
 	draw(piece[0],nextPos,Vector2i(-1,-1))
 	draw(next_piece[0],nextPos,pieceAtlases[pieces.find(next_piece)])
+	
 func move(dir:Vector2i):
 	if(canMove(dir)):
 		draw(piece[rot],cur,Vector2i(-1,-1))
@@ -230,13 +282,13 @@ func move(dir:Vector2i):
 		pieceAtlas = nextAtlas
 		next_piece = pick_piece()
 		nextAtlas = pieceAtlases[pieces.find(next_piece)]
-		cur = startPos
+		cur = startPos[pieces.find(piece)]
 		if not paused:
 			createPiece(piece)
 
 func draw(p, coord, atlas):
 	for i in p:
-		set_cell(coord + i,level,atlas)
+		set_cell(coord + i,level% 10,atlas)
 	pass
 
 func rotator(clock):
@@ -250,7 +302,7 @@ func lock():
 			sd = false
 		draw(piece[rot],cur,Vector2i(-1,-1))
 		for i in piece[rot]:
-			get_parent().get_node("Board").set_cell(i+cur,level,pieceAtlases[pieces.find(piece)])
+			get_parent().get_node("Board").set_cell(i+cur,level % 10,pieceAtlases[pieces.find(piece)])
 		scoreChecker()
 
 func canMove(dir:Vector2i):

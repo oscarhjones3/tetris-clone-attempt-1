@@ -11,9 +11,14 @@ config_version=5
 [application]
 
 config/name="Tetris Clone Attempt 1"
+run/main_scene="uid://b1vcfns7yn86o"
 config/features=PackedStringArray("4.5", "Forward Plus")
 run/max_fps=60
 config/icon="res://icon.svg"
+
+[autoload]
+
+GameStart="*res://scoreData/gameStart.gd"
 
 [display]
 

@@ -1,8 +1,8 @@
-extends TileMapLayer
-
-
+extends GridContainer
+var menus = ["Level","Controller","Start"]
 # Called when the node enters the scene tree for the first time.
-func _ready() -> void:
+func _ready() -> void: # Replace with function body.
+	columns = 5
 	pass
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
