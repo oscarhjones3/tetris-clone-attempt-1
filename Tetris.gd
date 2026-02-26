@@ -72,7 +72,8 @@ var pieceAtlas : Vector2i
 var nextAtlas : Vector2i
 var pieceAtlases = [Vector2i(1,1),Vector2i(0,1),Vector2i(0,1),Vector2i(1,1),Vector2i(1,0),Vector2i(1,0),Vector2i(1,0)]
 
-var rng = RandomNumberGenerator.new()
+
+
 #gamevars
 signal scoreUpdate(p : int,l:int, li:int)
 signal gameOver
@@ -86,15 +87,17 @@ var pName : String
 
 var records = GameStart.records
 var highScoreNames = GameStart.recordNames 
-
 var level = GameStart.level
-# Called when the node enters the scene tree for the first time.
+
+var player = GameStart.player
+
 func _ready() -> void:
+	seed(1);
 	newGame()
 	#records = []
 	#highScoreNames = []
 	pass # Replace with function body.
-# Called every frame. 'delta' is the elapsed time since the previous frame.
+
 func _input(event: InputEvent) -> void:
 	if(not paused):
 		if Input.is_action_just_pressed("ui_left"):
@@ -105,6 +108,7 @@ func _input(event: InputEvent) -> void:
 			moveTicks[1] = -10
 	if Input.is_action_just_released("ui_down"):
 		sd = true
+
 func _process(delta: float) -> void:
 	if Input.is_action_just_pressed("ui_accept"):
 			if(stopGame):
@@ -135,6 +139,7 @@ func _process(delta: float) -> void:
 				moveTicks[i] = 0
 				if(Input.is_action_pressed("ui_down")&& sd== true):
 					points += 1
+
 func scoreChecker():
 	var isClear = true
 	var clearedLines : Array = []
@@ -150,6 +155,7 @@ func scoreChecker():
 		return true
 	else:
 		return false
+
 func score(c: Array):
 	var clears = c
 	var amount = clears.size()
@@ -192,8 +198,7 @@ func score(c: Array):
 			levelUp()
 		paused = false
 		createPiece(piece)
-		
-		
+	
 func saveRecords():
 	var saved = false
 	
@@ -252,6 +257,7 @@ func levelUp():
 		for x in range (1,11):
 			var co = get_parent().get_node("Board").get_cell_atlas_coords(Vector2i(x,y))
 			get_parent().get_node("Board").set_cell(Vector2i(x,y),level % 10,co)
+
 func pick_piece():
 	var p = randi() % 7
 	return pieces.get(p)
@@ -266,6 +272,14 @@ func createPiece(p):
 	draw(p[rot],startPos[pieces.find(p)],pieceAtlases[pieces.find(piece)])
 	draw(piece[0],nextPos,Vector2i(-1,-1))
 	draw(next_piece[0],nextPos,pieceAtlases[pieces.find(next_piece)])
+	if(paused == false):
+		if(player == 1):
+			
+			makeMove(COM1())
+		if(player == 2):
+			makeMove(COM2())
+		if(player == 3):
+			makeMove(COM3())
 	
 func move(dir:Vector2i):
 	if(canMove(dir)):
@@ -330,3 +344,259 @@ func blankRow(y):
 			if(not empty(Vector2i(x,y))):
 				return false
 		return true
+
+func COM1():
+	var board :Array
+	var moves : Array
+	#representing the board as an array of arrays
+	for y in range(1,21):
+		var row = []
+		for x in range(1,11):
+			if(get_parent().get_node("Board").get_cell_atlas_coords(Vector2i(x,y)) == Vector2i(2,0)):
+				row.append(0)
+			else:
+				row.append(1)
+		board.append(row)
+	
+	#create an array of all possible moves
+	for r in range (0,4):
+		var minRight = 0 - minMaxDir(piece[r],"x",false)
+		var maxRight = 10 - minMaxDir(piece[r],"x",true)
+		for x in range(minRight,maxRight):
+			moves.append([x,r])
+	var results = []
+	var bestMove = 10
+	for m in moves:
+		results.append(COM1Score(boardAfter(m,board.duplicate())))
+	for r in results:
+		if(r < results[bestMove]):
+			bestMove = results.find(r)
+	#print(moves)
+	#print(results)
+	print(moves[bestMove])
+	return(moves[bestMove])
+func COM2():
+	var board :Array
+	var moves : Array
+	#representing the board as an array of arrays
+	for y in range(1,21):
+		var row = []
+		for x in range(1,11):
+			if(get_parent().get_node("Board").get_cell_atlas_coords(Vector2i(x,y)) == Vector2i(2,0)):
+				row.append(0)
+			else:
+				row.append(1)
+		board.append(row)
+	
+	#create an array of all possible moves
+	for r in range (0,4):
+		var minRight = 0 - minMaxDir(piece[r],"x",false)
+		var maxRight = 10 - minMaxDir(piece[r],"x",true)
+		for x in range(minRight,maxRight):
+			moves.append([x,r])
+	var results = []
+	var bestMove = 10
+	for m in moves:
+		results.append(COM2Score(boardAfter(m,board.duplicate())))
+	for r in results:
+		if(r > results[bestMove]):
+			bestMove = results.find(r)
+	print(moves)
+	print(results)
+	print(moves[bestMove])
+	return(moves[bestMove])
+	
+func COM3():
+	pass
+
+func makeMove(m:Array):
+	rotator(m[1] - rot)
+	for i in range(0,abs(cur.x - m[0])+1):
+		await get_tree().create_timer(0.05).timeout
+		if(cur.x > m[0]):
+			move(Vector2i(-1,0))
+		else:
+			move(Vector2i(1,0))
+
+func minMaxDir(p:Array,d:String,Maximum:bool): 
+	var M : int
+	if(Maximum):
+		M = 0
+		for i in range(0,4):
+			if(d == "x"):
+				if(p[i].x > M):
+					M = p[i].x
+			elif(d == "y"):
+				if(p[i].y > M):
+					M = p[i].y
+		return M
+	else:
+		M = 3
+		for i in range(0,4):
+			if(d == "x"):
+				if(p[i].x < M):
+					M = p[i].x
+			elif(d == "y"):
+				if(p[i].y < M):
+					M = p[i].y
+		return M
+
+func boardAfter(m:Array,b:Array):
+	var board = b
+	var newBoard = []
+	for y in range(0,20):
+		var blank = []
+		for x in range(0,10):
+			blank.append(0)
+		newBoard.append(blank)
+	
+	#find where the piece stops moving
+	var minY = 19 - minMaxDir(piece[m[1]],"y",true)
+	var canMoveDown = true
+	var stop = minY
+	for y in range(0,minY):
+		if(canMoveDown):
+			for i in piece[m[1]]:
+				if(b[i.y + y + 1][i.x + m[0]] == 1):
+					canMoveDown = false
+					stop = y
+	#draw the piece onto the board
+	for y in range(0,20):
+		for x in range(0,10):
+			newBoard[y][x] = board[y][x]
+	for i in piece[m[1]]:
+		newBoard[stop + i.y][i.x + m[0]] = 1
+	#print(newBoard)
+	return newBoard
+
+func COM1Score(board:Array):
+	var newBoard = board
+	var columnHeights = []
+	var lineClears : float = 0
+	
+	for x in range(0,10):
+		var height = 0
+		for y in range(19,-1,-1):
+			if(newBoard[y][x] == 1):
+				height = 20-y
+		columnHeights.append(height)
+	# check for cleared lines
+	for y in range(0,20):
+		var isClear = true
+		for x in range(0,10):
+			if(newBoard[y][x] == 0):
+				isClear = false
+		if(isClear):
+			lineClears += 1
+	var columnTotals:float = 0.0
+	var tippyTop = 0
+	for i in columnHeights:
+		columnTotals += i
+		if i > tippyTop:
+			tippyTop = i
+	var colAvg:float = columnTotals / columnHeights.size()
+	colAvg -= lineClears
+	var Score = colAvg + tippyTop - (3*lineClears)
+	return Score
+func COM2Score(board:Array):
+	var cols : Array = []
+	var wells = []
+	
+	
+	var clears = 0
+	var avgHeight : float = 0
+	var maxHeight = 0
+	var holes = 0
+	var colBumps = 0
+	var rowBumps = 0
+	var wellAvg : float
+	var numWells = 0
+	#find line clears
+	var clearArray = []
+	for y in range(0,20):
+		var isClear = true
+		for x in range(0,10):
+			if(board[y][x] == 0):
+				isClear = false
+		if(isClear):
+			clears += 1
+			board[y] = [0,0,0,0,0,0,0,0,0,0]
+			clearArray.append(y)
+	for i in clearArray:
+		board.remove_at(i)
+		board.insert(0,[0,0,0,0,0,0,0,0,0,0])
+			
+			
+	#find AVG and MAX board height
+	var totalHeight : float = 0
+	for x in range(0,10):
+		var height = 0
+		for y in range(19,-1,-1):
+			if(board[y][x] == 1):
+				height = 20 - y
+		totalHeight += height
+		cols.append(height)
+		if(height > maxHeight):
+			maxHeight = height
+	avgHeight = totalHeight / 10
+	
+	#find holes (empty with a full above)
+	for x in range(0,10):
+		for y in range(0,19):
+			if(board[y][x] == 1 && board[y+1][x] == 0):
+				holes += 1
+			
+	#bumps in cols
+	for x in range(0,10):
+		for y in range(19,20-cols[x],-1):
+			if((board[y][x]) != (board[y-1][x])):
+				colBumps += 1
+	
+	#bumps in rows
+	for y in range(0,20):
+		for x in range(0,9):
+			if(board[y][x] != board[y][x+1]):
+				rowBumps += 1
+				
+	#find wells
+	if(cols[0] < cols[1]):
+		if(cols[1] - cols[0] > 2):
+			numWells += 1
+		wells.append(cols[1]-cols[0])
+	else:
+		wells.append(0)
+	for x in range(1,9):
+		var lDif = cols[x-1] - cols[x]
+		var RDif = cols[x+1] - cols[x]
+		if(lDif > 0 && RDif > 0):
+			if(lDif > RDif):
+				wells.append(lDif)
+			else:
+				wells.append(RDif)
+		else:
+			wells.append(0)
+		if(lDif > 2 && RDif > 2):
+			numWells += 1
+	if(cols[9] < cols[8]):
+		if(cols[8] - cols[9] > 2):
+			numWells += 1
+		wells.append(cols[8]-cols[9])
+	else:
+		wells.append(0)
+	for w in wells:
+		wellAvg += w
+	wellAvg = wellAvg / wells.size()
+	
+	#Apply weights to these values and calculate final score
+	#roughly == lineClears - everything else
+	var clearWeights = [0,0,25,45,12500]
+	var Score = 0
+	
+	Score += 3 * clearWeights[clears]
+	Score -= 2 * avgHeight
+	Score -= maxHeight
+	Score -= 5000 * holes
+	Score -= (colBumps + rowBumps)
+	Score -= 2 * wellAvg
+	Score -= 4 * abs((1-numWells))
+	return Score

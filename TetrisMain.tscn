@@ -1,4 +1,4 @@
-[gd_scene load_steps=73 format=4 uid="uid://chqracsiwepq7"]
+[gd_scene load_steps=72 format=4 uid="uid://chqracsiwepq7"]
 
 [ext_resource type="Texture2D" uid="uid://cojbkaa2t42u5" path="res://tileMaps/TetrisTileMap.png" id="1_y4kt5"]
 [ext_resource type="Texture2D" uid="uid://cefgqvwfwjk02" path="res://tileMaps/bgTiles.png" id="2_ydk4c"]
@@ -22,7 +22,6 @@
 [ext_resource type="Texture2D" uid="uid://cvssvmwkdp5qi" path="res://tileMaps/bgTiles9.png" id="12_5e2s4"]
 [ext_resource type="Texture2D" uid="uid://bqrq2cm2ssgt" path="res://tileMaps/TetrisTileMap9.png" id="12_f0sjx"]
 [ext_resource type="Script" uid="uid://dg72rmkibqeld" path="res://hud.gd" id="13_txvp4"]
-[ext_resource type="FontFile" path="RasterForgeRegular-JpBgm.ttf" id="23_5kk0x"]
 [ext_resource type="FontFile" uid="uid://337humey8bqt" path="res://RasterForgeRegular-JpBgm.ttf" id="23_qq8ua"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_d0csf"]
@@ -465,7 +464,7 @@ offset_right = 238.5625
 offset_bottom = 373.0
 theme = SubResource("Theme_bf8c5")
 theme_override_colors/selection_color = Color(0.5019608, 0.5019608, 0.5019608, 0)
-theme_override_fonts/font = ExtResource("23_5kk0x")
+theme_override_fonts/font = ExtResource("23_qq8ua")
 theme_override_font_sizes/font_size = 25
 max_length = 3
 caret_blink = true

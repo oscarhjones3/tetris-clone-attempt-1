@@ -44,7 +44,11 @@ func _process(delta: float) -> void:
 
 
 func _on_sb_pressed() -> void:
-	GameStart.level = level
+	if(Input.is_action_pressed("x")):
+		GameStart.level = level + 10
+	else:
+		GameStart.level = level
+	GameStart.player = player
 	get_tree().change_scene_to_file("res://TetrisMain.tscn") # Replace with function body.
 
 
@@ -68,3 +72,13 @@ func _on_level_8_pressed() -> void:
 	level = 8
 func _on_level_9_pressed() -> void:
 	level = 9
+
+
+func _on_ctrl_0_pressed() -> void:
+	player = 0 # Replace with function body.
+func _on_ctrl_1_pressed() -> void:
+	player = 1
+func _on_ctrl_2_pressed() -> void:
+	player = 2
+func _on_ctrl_3_pressed() -> void:
+	player = 3

@@ -615,4 +615,8 @@ label_settings = SubResource("LabelSettings_x55ar")
 [connection signal="pressed" from="TileMapLayer/LevelSelect/Level7" to="TileMapLayer" method="_on_level_7_pressed"]
 [connection signal="pressed" from="TileMapLayer/LevelSelect/Level8" to="TileMapLayer" method="_on_level_8_pressed"]
 [connection signal="pressed" from="TileMapLayer/LevelSelect/Level9" to="TileMapLayer" method="_on_level_9_pressed"]
+[connection signal="pressed" from="TileMapLayer/PlayerSelect/Ctrl0" to="TileMapLayer" method="_on_ctrl_0_pressed"]
+[connection signal="pressed" from="TileMapLayer/PlayerSelect/Ctrl1" to="TileMapLayer" method="_on_ctrl_1_pressed"]
+[connection signal="pressed" from="TileMapLayer/PlayerSelect/Ctrl2" to="TileMapLayer" method="_on_ctrl_2_pressed"]
+[connection signal="pressed" from="TileMapLayer/PlayerSelect/Ctrl3" to="TileMapLayer" method="_on_ctrl_3_pressed"]
 [connection signal="pressed" from="TileMapLayer/StartButton/SB" to="TileMapLayer" method="_on_sb_pressed"]
