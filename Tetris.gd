@@ -92,7 +92,7 @@ var level = GameStart.level
 var player = GameStart.player
 
 func _ready() -> void:
-	seed(1);
+	seed(2);
 	newGame()
 	#records = []
 	#highScoreNames = []
@@ -124,9 +124,9 @@ func _process(delta: float) -> void:
 			rotator(1)
 		if Input.is_action_just_pressed("z"):
 			rotator(3)
-		if Input.is_action_pressed("ui_left"):
+		if Input.is_action_pressed("ui_left") || COMLeft:
 			moveTicks[0] += ARR
-		elif Input.is_action_pressed("ui_right"):
+		elif Input.is_action_pressed("ui_right") || COMRight:
 			moveTicks[1] += ARR
 		elif Input.is_action_pressed("ui_down"):
 			if sd == true: 
@@ -228,6 +228,7 @@ func newGame():
 	createPiece(piece)
 
 func endGame():
+	paused = true
 	lock()
 	var colors : Array = [Vector2i(0,1),Vector2i(1,1), Vector2i(1,0)]
 	var alt = 0
@@ -272,16 +273,16 @@ func createPiece(p):
 	draw(p[rot],startPos[pieces.find(p)],pieceAtlases[pieces.find(piece)])
 	draw(piece[0],nextPos,Vector2i(-1,-1))
 	draw(next_piece[0],nextPos,pieceAtlases[pieces.find(next_piece)])
-	if(paused == false):
-		if(player == 1):
-			
+	if(player == 1):
 			makeMove(COM1())
-		if(player == 2):
+	if(player == 2):
 			makeMove(COM2())
-		if(player == 3):
+	if(player == 3):
 			makeMove(COM3())
 	
 func move(dir:Vector2i):
+	COMLeft = false
+	COMRight = false
 	if(canMove(dir)):
 		draw(piece[rot],cur,Vector2i(-1,-1))
 		cur.x += dir.x
@@ -367,13 +368,12 @@ func COM1():
 	var results = []
 	var bestMove = 10
 	for m in moves:
-		results.append(COM1Score(boardAfter(m,board.duplicate())))
+		results.append(COM1Score(boardAfter(m,board.duplicate(),true)))
 	for r in results:
 		if(r < results[bestMove]):
 			bestMove = results.find(r)
 	#print(moves)
 	#print(results)
-	print(moves[bestMove])
 	return(moves[bestMove])
 func COM2():
 	var board :Array
@@ -397,17 +397,64 @@ func COM2():
 	var results = []
 	var bestMove = 10
 	for m in moves:
-		results.append(COM2Score(boardAfter(m,board.duplicate())))
+		results.append(COM2Score(boardAfter(m,board.duplicate(),true)))
 	for r in results:
 		if(r > results[bestMove]):
 			bestMove = results.find(r)
-	print(moves)
-	print(results)
-	print(moves[bestMove])
 	return(moves[bestMove])
 	
 func COM3():
-	pass
+	var board :Array
+	var moves : Array
+	#representing the board as an array of arrays
+	for y in range(1,21):
+		var row = []
+		for x in range(1,11):
+			if(get_parent().get_node("Board").get_cell_atlas_coords(Vector2i(x,y)) == Vector2i(2,0)):
+				row.append(0)
+			else:
+				row.append(1)
+		board.append(row)
+	
+	#create an array of all possible moves
+	for r in range (0,4):
+		var minRight = 0 - minMaxDir(piece[r],"x",false)
+		var maxRight = 10 - minMaxDir(piece[r],"x",true)
+		for x in range(minRight,maxRight):
+			moves.append([x,r])
+	#create an array of all possible moves with the next piece
+	var secondaryMoves : Array
+	for r in range(0,4):
+		var minRightSecond = 0 - minMaxDir(next_piece[r],"x", false)
+		var maxRightSecond = 10 - minMaxDir(next_piece[r],"x",true)
+		for x in range(minRightSecond, maxRightSecond):
+			secondaryMoves.append([x,r])
+	var results = []
+	var bestMove = 10
+	var resultBoard : Array
+	for m in moves:
+		resultBoard = boardAfter(m,board.duplicate(),true)
+		var secondaryResults : Array
+		var avgSecond = 0
+		for m2 in secondaryMoves:
+			secondaryResults.append(COM2Score(boardAfter(m2,resultBoard.duplicate(),false)))
+			avgSecond += COM2Score(boardAfter(m2,resultBoard.duplicate(),false))
+		var maxSecond = secondaryResults[0]
+		for r in secondaryResults:
+			if(r > maxSecond):
+				maxSecond = r
+		avgSecond = avgSecond / secondaryResults.size()
+		maxSecond = abs(-50000 - maxSecond)
+		
+		results.append(COM2Score(resultBoard) + (0.5 * avgSecond) + (0.3 * maxSecond))
+	for r in results:
+		if(r > results[bestMove]):
+			bestMove = results.find(r)
+	print(results)
+	return(moves[bestMove])
+
+var COMLeft = false
+var COMRight = false
 
 func makeMove(m:Array):
 	rotator(m[1] - rot)
@@ -417,7 +464,11 @@ func makeMove(m:Array):
 			move(Vector2i(-1,0))
 		else:
 			move(Vector2i(1,0))
-
+	#if(cur.x + 1 != m[0]):
+	#	if(cur.x + 1 > m[0]):
+	#		COMLeft = true
+	#	else:
+	#		COMRight = true
 func minMaxDir(p:Array,d:String,Maximum:bool): 
 	var M : int
 	if(Maximum):
@@ -441,9 +492,15 @@ func minMaxDir(p:Array,d:String,Maximum:bool):
 					M = p[i].y
 		return M
 
-func boardAfter(m:Array,b:Array):
+func boardAfter(m:Array,b:Array,p:bool):
 	var board = b
 	var newBoard = []
+	var piece_used
+	if(p):
+	
+		piece_used = piece
+	else:
+		piece_used = next_piece
 	for y in range(0,20):
 		var blank = []
 		for x in range(0,10):
@@ -451,12 +508,12 @@ func boardAfter(m:Array,b:Array):
 		newBoard.append(blank)
 	
 	#find where the piece stops moving
-	var minY = 19 - minMaxDir(piece[m[1]],"y",true)
+	var minY = 19 - minMaxDir(piece_used[m[1]],"y",true)
 	var canMoveDown = true
 	var stop = minY
 	for y in range(0,minY):
 		if(canMoveDown):
-			for i in piece[m[1]]:
+			for i in piece_used[m[1]]:
 				if(b[i.y + y + 1][i.x + m[0]] == 1):
 					canMoveDown = false
 					stop = y
@@ -464,7 +521,7 @@ func boardAfter(m:Array,b:Array):
 	for y in range(0,20):
 		for x in range(0,10):
 			newBoard[y][x] = board[y][x]
-	for i in piece[m[1]]:
+	for i in piece_used[m[1]]:
 		newBoard[stop + i.y][i.x + m[0]] = 1
 	#print(newBoard)
 	return newBoard
@@ -595,7 +652,7 @@ func COM2Score(board:Array):
 	Score += 3 * clearWeights[clears]
 	Score -= 2 * avgHeight
 	Score -= maxHeight
-	Score -= 5000 * holes
+	Score -= 1500 * holes
 	Score -= (colBumps + rowBumps)
 	Score -= 2 * wellAvg
 	Score -= 4 * abs((1-numWells))
