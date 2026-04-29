@@ -92,7 +92,7 @@ var level = GameStart.level
 var player = GameStart.player
 
 func _ready() -> void:
-	seed(2);
+	seed(10);
 	newGame()
 	#records = []
 	#highScoreNames = []
@@ -211,8 +211,8 @@ func saveRecords():
 	if(not saved && records.size() <= 10):
 		records.append(points)
 		highScoreNames.append(pName)
-	GameStart.records = records
-	GameStart.recordNames = highScoreNames
+	GameStart.records = records.slice(0,10)
+	GameStart.recordNames = highScoreNames.slice(0,10)
 	GameStart.writeSave()
 	
 func newGame():
@@ -253,7 +253,10 @@ func endGame():
 	
 func levelUp():
 	level += 1
-	moveTime[2] = dropTable[level]
+	if(level < 30):
+		moveTime[2] = dropTable[level]
+	else:
+		moveTime[2] = 1
 	for y in range(20,0,-1):
 		for x in range (1,11):
 			var co = get_parent().get_node("Board").get_cell_atlas_coords(Vector2i(x,y))
@@ -435,22 +438,18 @@ func COM3():
 	for m in moves:
 		resultBoard = boardAfter(m,board.duplicate(),true)
 		var secondaryResults : Array
-		var avgSecond = 0
 		for m2 in secondaryMoves:
-			secondaryResults.append(COM2Score(boardAfter(m2,resultBoard.duplicate(),false)))
-			avgSecond += COM2Score(boardAfter(m2,resultBoard.duplicate(),false))
+			secondaryResults.append(COM2Score(COM3BoardCleaner(boardAfter(m2,resultBoard.duplicate(),false))))
 		var maxSecond = secondaryResults[0]
 		for r in secondaryResults:
 			if(r > maxSecond):
 				maxSecond = r
-		avgSecond = avgSecond / secondaryResults.size()
 		maxSecond = abs(-50000 - maxSecond)
 		
-		results.append(COM2Score(resultBoard) + (0.5 * avgSecond) + (0.3 * maxSecond))
+		results.append(COM2Score(resultBoard) + (0.3 * maxSecond))
 	for r in results:
 		if(r > results[bestMove]):
 			bestMove = results.find(r)
-	print(results)
 	return(moves[bestMove])
 
 var COMLeft = false
@@ -525,7 +524,21 @@ func boardAfter(m:Array,b:Array,p:bool):
 		newBoard[stop + i.y][i.x + m[0]] = 1
 	#print(newBoard)
 	return newBoard
-
+func COM3BoardCleaner(b:Array):
+	var board = b
+	var clearArray = []
+	for y in range(0,20):
+		var isClear = true
+		for x in range(0,10):
+			if(board[y][x] == 0):
+				isClear = false
+		if(isClear):
+			board[y] = [0,0,0,0,0,0,0,0,0,0]
+			clearArray.append(y)
+	for i in clearArray:
+		board.remove_at(i)
+		board.insert(0,[0,0,0,0,0,0,0,0,0,0])
+	return board
 func COM1Score(board:Array):
 	var newBoard = board
 	var columnHeights = []

@@ -14,6 +14,7 @@ func _ready() -> void:
 			get_node("PlayerSelect/Ctrl" + str(i)).toggle_mode = true
 	lBoardS = GameStart.records
 	lBoardN = GameStart.recordNames
+	
 	for i in range (0,lBoardS.size()):
 		get_node("humanLeaderboard/Names/Name" + str(i)).text = lBoardN[i]
 		get_node("humanLeaderboard/Scores/Score" + str(i)).text = str(lBoardS[i])
